@@ -50,7 +50,8 @@ namespace Pokedex
             List<Type> types = new List<Type>();
             List<Generation> generations = new List<Generation>();
 
-            var connString = "Host=localhost;Port=5432;Username=user;Password=user;Database=Pokedex";
+
+            var connString = "Host=pokemondb.cn80o6k0q3n7.us-east-2.rds.amazonaws.com;Port=5432;Database=Pokedex;Username=postgres;Password=postgres;SslMode=Require;Trust Server Certificate=true;";
 
             using (var conn = new NpgsqlConnection(connString))
             {
@@ -92,7 +93,8 @@ namespace Pokedex
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Exception occurred: " + ex.Message);
+                    MessageBox.Show("An error occurred while connecting to the database. Please check your internet connection and try again.", "Database Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
 

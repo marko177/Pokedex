@@ -1,9 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
 
 namespace Pokedex
 {
@@ -33,7 +36,7 @@ namespace Pokedex
             lblPokeHeight.Text = pokemon.Height.ToString() + " m";
             lblPokeWeight.Text = pokemon.Weight.ToString() + " kg";
             lblCategory.Text = pokemon.Category;
-            picboxSprite.Load(pokemon.Sprite);
+            //picboxSprite.Load(pokemon.Sprite);
             var type1 = (Type)comboTypes.Items[pokemon.Type1];
             lblType1.Text = type1.Name;
             panelType1.BackColor = Color.FromArgb(type1.Bgcolor_r, type1.Bgcolor_g, type1.Bgcolor_b);
@@ -52,61 +55,84 @@ namespace Pokedex
                 panelType2.Enabled = false;
                 panelType2.BorderStyle = BorderStyle.None;
             }
+            try
+            {
+                picboxSprite.Load(pokemon.Sprite);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error loading the image");
+                picboxSprite.Image = picboxSprite.ErrorImage;
+                MessageBox.Show("An internet conection is need to visualize the Pokemons sprite.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void rotatePokemon()
         {
-
-            var pokemon = (Pokemon)comboPokemons.SelectedItem;
-            if (picboxSprite.ImageLocation == pokemon.Sprite)
+            try
             {
-                picboxSprite.Load(pokemon.SpriteBack);
+                var pokemon = (Pokemon)comboPokemons.SelectedItem;
+                if (picboxSprite.ImageLocation == pokemon.Sprite)
+                {
+                    picboxSprite.Load(pokemon.SpriteBack);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteShiny)
+                {
+                    picboxSprite.Load(pokemon.SpriteShinyBack);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteBack)
+                {
+                    picboxSprite.Load(pokemon.Sprite);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteShinyBack)
+                {
+                    picboxSprite.Load(pokemon.SpriteShiny);
+                }
+                else
+                {
+                    picboxSprite.Load(pokemon.Sprite);
+                }
             }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteShiny)
+            catch (Exception ex)
             {
-                picboxSprite.Load(pokemon.SpriteShinyBack);
-            }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteBack)
-            {
-                picboxSprite.Load(pokemon.Sprite);
-            }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteShinyBack)
-            {
-                picboxSprite.Load(pokemon.SpriteShiny);
-            }
-            else
-            {
-                picboxSprite.Load(pokemon.Sprite);
+                Console.WriteLine("Error loading the image");
+                picboxSprite.Image = picboxSprite.ErrorImage;
+                MessageBox.Show("An internet conection is need to visualize the Pokemons sprite.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void toggleShiny()
         {
-            var pokemon = (Pokemon)comboPokemons.SelectedItem;
-            if (picboxSprite.ImageLocation == pokemon.Sprite)
+            try
             {
-                picboxSprite.Load(pokemon.SpriteShiny);
+                var pokemon = (Pokemon)comboPokemons.SelectedItem;
+                if (picboxSprite.ImageLocation == pokemon.Sprite)
+                {
+                    picboxSprite.Load(pokemon.SpriteShiny);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteShiny)
+                {
+                    picboxSprite.Load(pokemon.Sprite);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteBack)
+                {
+                    picboxSprite.Load(pokemon.SpriteShinyBack);
+                }
+                else if (picboxSprite.ImageLocation == pokemon.SpriteShinyBack)
+                {
+                    picboxSprite.Load(pokemon.SpriteBack);
+                }
+                else
+                {
+                    picboxSprite.Load(pokemon.Sprite);
+                }
             }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteShiny)
+            catch (Exception ex)
             {
-                picboxSprite.Load(pokemon.Sprite);
+                Console.WriteLine("Error loading the image");
+                picboxSprite.Image = picboxSprite.ErrorImage;
+                MessageBox.Show("An internet conection is need to visualize the Pokemons sprite.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteBack)
-            {
-                picboxSprite.Load(pokemon.SpriteShinyBack);
-            }
-            else if (picboxSprite.ImageLocation == pokemon.SpriteShinyBack)
-            {
-                picboxSprite.Load(pokemon.SpriteBack);
-            }
-            else
-            {
-                picboxSprite.Load(pokemon.Sprite);
-            }
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
         }
 
         private void comboPokemons_SelectedIndexChanged(object sender, EventArgs e)
@@ -274,6 +300,83 @@ namespace Pokedex
                     {
                         comboPokemons.DataSource = unfilteredPokemon;
                         comboPokemons.DisplayMember = "Name";
+                    }
+                }
+            }
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            comboGeneration.SelectedIndex = 0;
+            comboTypes.SelectedIndex = 0;
+            comboPokemons.SelectedIndex = 0;
+        }
+
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            var pokemon = (Pokemon)comboPokemons.SelectedItem;
+            var type1 = (Type)comboTypes.Items[pokemon.Type1];
+            var type2 = (Type)comboTypes.Items[pokemon.Type2];
+            var gen = (Generation)comboGeneration.SelectedItem;
+
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.Title = "Save PDF";
+                dialog.Filter = "PDF Files (*.pdf)|*.pdf";
+                dialog.DefaultExt = "pdf";
+                dialog.AddExtension = true;
+
+                string currentDateTime = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                dialog.FileName = $"{pokemon.Name}_info_{currentDateTime}.pdf";
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string outputFilePath = dialog.FileName;
+
+                    using (var writer = new PdfWriter(outputFilePath))
+                    {
+                        using (var pdf = new PdfDocument(writer))
+                        {
+                            var document = new Document(pdf);
+
+                            document.Add(new Paragraph("Pokemon Info").SetTextAlignment(TextAlignment.CENTER).SetFontSize(20));
+                            document.Add(new Paragraph("Name: " + pokemon.Name));
+                            document.Add(new Paragraph("ID: " + pokemon.Id));
+                            document.Add(new Paragraph("Description: " + pokemon.Description));
+                            document.Add(new Paragraph("Height: " + pokemon.Height + " m"));
+                            document.Add(new Paragraph("Weight: " + pokemon.Weight + " kg"));
+                            document.Add(new Paragraph("Category: " + pokemon.Category));
+                            document.Add(new Paragraph("Type 1: " + type1.Name));
+                            if (pokemon.Type2 != 0)
+                            {
+                                document.Add(new Paragraph("Type 2: " + type2.Name));
+                            }
+                            document.Add(new Paragraph("Generation: " + gen.Name));
+                            
+                            try{ 
+                                var img = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(pokemon.Sprite));
+                                var imgBack = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(pokemon.SpriteBack));
+                                var imgShiny = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(pokemon.SpriteShiny));
+                                var imgShinyBack = new iText.Layout.Element.Image(iText.IO.Image.ImageDataFactory.Create(pokemon.SpriteShinyBack));
+
+                                document.Add(new Paragraph("Sprite:"));
+                                document.Add(img);
+                                document.Add(new Paragraph("Back Sprite:"));
+                                document.Add(imgBack);
+                                document.Add(new Paragraph("Shiny Sprite:"));
+                                document.Add(imgShiny);
+                                document.Add(new Paragraph("Shiny Back Sprite:"));
+                                document.Add(imgShinyBack);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("Unable to load sprites.");
+                                MessageBox.Show("An internet conection is need to add the Pokemons sprites to the document.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                            document.Close();
+
+                            MessageBox.Show("Pokémon info exported to " + outputFilePath);
+                        }
                     }
                 }
             }
