@@ -51,7 +51,7 @@ namespace Pokedex
             List<Generation> generations = new List<Generation>();
 
 
-            var connString = "Host=pokemondb.cn80o6k0q3n7.us-east-2.rds.amazonaws.com;Port=5432;Database=Pokedex;Username=postgres;Password=postgres;SslMode=Require;Trust Server Certificate=true;";
+            var connString = "dbconnstring";
 
             using (var conn = new NpgsqlConnection(connString))
             {
